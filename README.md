@@ -1,4 +1,4 @@
-# 🚀 Complete Automated CI/CD Pipeline Demo
+# 🚀 Complete Automated CI/CD Pipeline
 
 A **fully automated CI/CD pipeline** that demonstrates end-to-end automation using Jenkins, Docker, Kubernetes, and GitHub. When you change the hello message in `app.py` and commit it, the application automatically updates on the port-forwarded URL!
 

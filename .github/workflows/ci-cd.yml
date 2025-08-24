@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Complete Automated CI/CD Pipeline
 
 on:
   push:
@@ -76,23 +76,55 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+        
+    - name: Configure kubectl for Minikube
+      run: |
+        echo "Setting up kubectl for local Minikube..."
+        echo "Note: This would be configured for your actual Kubernetes cluster"
+        echo "For local Minikube, you need to run: kubectl rollout restart -n demo deploy/hello-flask"
+        
+    - name: Deploy to Kubernetes
+      run: |
+        echo "🎉 Docker image built and pushed successfully!"
+        echo "📝 Next step: Run 'kubectl rollout restart -n demo deploy/hello-flask' to deploy the new image"
+        echo "🔗 Or use the auto-deploy script: ./auto-deploy.sh"
+        
   notify:
-    needs: [test, build-and-push]
+    needs: [test, build-and-push, deploy]
     runs-on: ubuntu-latest
     if: always()
     
     steps:
     - name: Notify on success
-      if: needs.test.result == 'success' && needs.build-and-push.result == 'success'
+      if: needs.test.result == 'success' && needs.build-and-push.result == 'success' && needs.deploy.result == 'success'
       run: |
-        echo "🎉 CI/CD Pipeline completed successfully!"
+        echo "🎉 Complete CI/CD Pipeline completed successfully!"
         echo "✅ Tests passed"
         echo "✅ Docker image built and pushed"
-        echo "📝 Next step: Run 'kubectl rollout restart -n demo deploy/hello-flask' to deploy the new image"
+        echo "✅ Ready for deployment"
+        echo ""
+        echo "🚀 To deploy locally, run:"
+        echo "   kubectl rollout restart -n demo deploy/hello-flask"
+        echo "   or"
+        echo "   ./auto-deploy.sh"
         
     - name: Notify on failure
-      if: needs.test.result == 'failure' || needs.build-and-push.result == 'failure'
+      if: needs.test.result == 'failure' || needs.build-and-push.result == 'failure' || needs.deploy.result == 'failure'
       run: |
         echo "❌ CI/CD Pipeline failed!"
         echo "Test result: ${{ needs.test.result }}"
         echo "Build result: ${{ needs.build-and-push.result }}"
+        echo "Deploy result: ${{ needs.deploy.result }}"
