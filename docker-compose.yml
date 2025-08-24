@@ -1,0 +1,22 @@
+services:
+  jenkins:
+    image: cicd-jenkins:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    environment:
+      - JENKINS_OPTS=--argumentsRealm.passwd.admin=admin123 --argumentsRealm.roles.admin=admin
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+    volumes:
+      - ./jenkins-casc:/var/jenkins_home/casc_configs
+      - ./:/workspace:rw               # <— app source available to Jenkins with read-write
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.kube:/var/jenkins_home/.kube:rw  # Make kubeconfig writable
+      - ${HOME}/.minikube:/var/jenkins_home/.minikube:ro  # Mount minikube directory
+    user: "root"  # Run as root for Docker access
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

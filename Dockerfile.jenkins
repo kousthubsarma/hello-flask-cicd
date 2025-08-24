@@ -1,0 +1,26 @@
+FROM jenkins/jenkins:lts-jdk21
+
+USER root
+RUN apt-get update && apt-get install -y \
+      git curl ca-certificates gnupg lsb-release python3 python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Docker CLI
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install -y docker-ce-cli && rm -rf /var/lib/apt/lists/*
+
+# kubectl (stable)
+RUN curl -fsSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && \
+    chmod +x /usr/local/bin/kubectl
+
+# Jenkins plugins
+COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+
+# Fix permissions for workspace and add jenkins to staff group
+RUN mkdir -p /workspace && chown -R jenkins:jenkins /workspace && \
+    usermod -a -G staff jenkins
+
+USER jenkins
