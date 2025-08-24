@@ -11,7 +11,7 @@ def health():
 def root():
     version = os.getenv("APP_VERSION", "1.0.0")
     return jsonify(
-        message="Hello, CI/CD with Flask - Fully Automatic Demo!",
+        message="Hello, CI/CD with Flask - Final Demo Test!",
         version=version,
         timestamp=os.getenv("BUILD_TIMESTAMP", "unknown")
     ), 200
